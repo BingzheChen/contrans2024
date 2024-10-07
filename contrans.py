@@ -4,6 +4,7 @@ import os
 import dotenv
 import requests
 import json
+from bs4 import BeautifulSoup
 dotenv.load_dotenv()
 
 class contrans:
@@ -88,12 +89,41 @@ class contrans:
                 return members.reset_index(drop=True)
     
     def get_sponsoredlegislation(self, bioguideId):
-                root = 'https://api.congress.gov/v3/'
-                endpoint = f'/member/{bioguideId}/sponsored-legislation'
-                headers = self.make_headers()
+
                 params = {'api_key': self.congresskey,
-          'limit': 250}
+                          'limit': 1} 
+                headers = self.make_headers()
+                root = 'https://api.congress.gov/v3'
+                endpoint = f'/member/{bioguideId}/sponsored-legislation'
                 r = requests.get(root + endpoint,
-                                 headers=headers,
-                                 params=params)
-                return json.loads(r.text)['sponsoredLegislation']
+                                 params=params,
+                                 headers=headers)
+                totalrecords = r.json()['pagination']['count']
+                
+                params['limit'] = 250
+                j = 0
+                bills_list = []
+                while j < totalrecords:
+                        params['offset'] = j
+                        r = requests.get(root + endpoint,
+                                         params=params,
+                                         headers=headers)
+                        records = r.json()['sponsoredLegislation']
+                        bills_list = bills_list + records
+                        j = j + 250
+        
+                return bills_list
+            
+    def get_billdata(self, billurl):
+        r = requests.get(billurl,
+                     params={'api_key': self.congresskey})
+        bill_json = json.loads(r.text)
+        texturl = bill_json['bill']['textVersions']['url']
+        r = requests.get(texturl,
+                         params={'api_key': self.congresskey})
+        toscrape = json.loads(r.text)['textVersions'][0]['formats'][0]['url']
+        r = requests.get(toscrape)
+        mysoup = BeautifulSoup(r.text, 'html.parser')
+        billtext =  mysoup.text
+        bill_json['bill_text'] = billtext
+        return bill_json
