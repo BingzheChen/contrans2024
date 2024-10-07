@@ -70,3 +70,30 @@ class contrans:
 
                 #bio_df = bio_df[['name', 'state', 'district', 'partyName', 'bioguideId']]
                 return bio_df
+            
+    def get_bioguide(self, name, state=None, district=None):
+                members = self.get_bioguideIDs()# replace with SQL query
+                
+                members['name'] = members['name'].str.lower().str.strip()
+                name = name.lower().strip()
+                
+                tokeep = [name in x for x in members['name']]
+                members = members[tokeep]
+                
+                if state is not None:
+                    members = members.query('state == @state')
+                if district is not None:
+                    members = members.query('district == @district')
+                
+                return members.reset_index(drop=True)
+    
+    def get_sponsoredlegislation(self, bioguideId):
+                root = 'https://api.congress.gov/v3/'
+                endpoint = f'/member/{bioguideId}/sponsored-legislation'
+                headers = self.make_headers()
+                params = {'api_key': self.congresskey,
+          'limit': 250}
+                r = requests.get(root + endpoint,
+                                 headers=headers,
+                                 params=params)
+                return json.loads(r.text)['sponsoredLegislation']
