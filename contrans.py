@@ -46,12 +46,12 @@ class contrans:
             }
             return headers
         
-    def get_bioguideIDs(self):
+    def get_bioguideIDs(self, congress=118):
                 params = {'api_key': self.congresskey,
                           'limit': 1} 
                 headers = self.make_headers()
                 root = 'https://api.congress.gov/v3'
-                endpoint = '/member'
+                endpoint = f'/member/congress/{congress}'
                 r = requests.get(root + endpoint,
                                  params=params,
                                  headers=headers)
