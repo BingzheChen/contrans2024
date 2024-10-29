@@ -5,6 +5,10 @@ import dotenv
 import requests
 import json
 from bs4 import BeautifulSoup
+import psycopg
+import sqlite3
+from sqlalchemy import create_engine
+
 dotenv.load_dotenv()
 
 class contrans:
@@ -19,6 +23,9 @@ class contrans:
         self.mypassword = os.getenv('mypassword')
         self.congresskey = os.getenv('congresskey')
         self.newskey = os.getenv('newskey')
+        self.POSTGRES_PASSWORD = os.getenv('POSTGRES_PASSWORD')
+        self.MONGO_INITDB_ROOT_USERNAME = os.getenv('MONGO_INITDB_ROOT_USERNAME')
+        self.MONGO_INITDB_ROOT_PASSWORD = os.getenv('MONGO_INITDB_ROOT_PASSWORD')
         self.us_state_to_abbrev = {
                         "Alabama": "AL","Alaska": "AK","Arizona": "AZ","Arkansas": "AR",
                         "California": "CA","Colorado": "CO","Connecticut": "CT","Delaware": "DE",
@@ -191,10 +198,30 @@ class contrans:
                         termsDF = pd.concat([termsDF, df])
                 members = members.drop('terms.item', axis=1)
                 return termsDF, members
+    
+    ### Connect to Databases
+            
+    def connect_to_postgres(self, pw, user='postgres',
+                            host='localhost', port=5432,
+                            create_contrans=False):
+        dbserver = psycopg.connect(
+            user=user,
+            password=pw,
+            host=host,
+            port=port
+        )
+        dbserver.autocommit = True
+        if create_contrans:
+            cursor = dbserver.cursor()
+            cursor.execute('DROP DATABASE IF EXISTS contrans')
+            cursor.execute('CREATE DATABASE contrans')
+        engine = create_engine(f'postgresql+psycopg://{user}:{pw}@{host}:{port}/contrans')
+        return dbserver, engine
         
-        ### Methods for building the 3NF relational DB tables
+    
+    ### Methods for building the 3NF relational DB tables
 
-    def make_members_df(self, members, ideology):
+    def make_members_df(self, members, ideology, engine):
                 '''
                 members should be the output of get_bioguideIDs(), 
                 with terms removed by get_terms(),
@@ -205,13 +232,16 @@ class contrans:
                                       left_on='bioguideId', 
                                       right_on='bioguide_id',
                                       how='left')
-                return members_df
+                # dbserver, engine = self.connect_to_postgres(self.POSTGRES_PASSWORD)
+                members_df.to_sql('members', con=engine, index=False, chunksize=1000, if_exists='replace')
         
-    def make_terms_df(self):
-                return self
+    def make_terms_df(self, terms, engine):
+                terms.to_sql('terms', con=engine, index=False, chunksize=1000, if_exists='replace')
         
-    def make_votes_df(self):
-                return self
+    def make_votes_df(self, votes, engine):
+                votes.to_sql('votes', con=engine, index=False, chunksize=1000, if_exists='replace')
         
     def make_agreement_df(self):
                 return self
+            
+    
