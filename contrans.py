@@ -224,7 +224,7 @@ class contrans:
     def make_members_df(self, members, ideology, engine):
                 '''
                 members should be the output of get_bioguideIDs(), 
-                with terms removed by get_terms(),
+                with terms removed by terms_df(),
                 augmented with contributions by make_cand_table().
                 ideology should be the output of get_ideology().
                 '''
