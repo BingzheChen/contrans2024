@@ -236,10 +236,15 @@ class contrans:
         mongo_bills.insert_many(bill_list_with_text)
     
     def upload_many_members_to_mongo(self, mongo_bills, members):
+        i =1
         for m in members:
-            status = f'Now uploading bills from {m} to MongoDB'
+            status = f'Now uploading bills from {m} to MongoDB: legislators {i} of {len(members)}'
             print(status)
-            self.upload_one_member_to_mongo(mongo_bills, m)
+            try:
+                self.upload_one_member_to_mongo(mongo_bills, m)
+            except:
+                print(f'Failed to upload {m} to MongoDB')
+            i += 1
     
     def query_mongo(self, collection, rows, columns): 
         cursor = collection.find(rows, columns) 
