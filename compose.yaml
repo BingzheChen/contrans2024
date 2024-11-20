@@ -1,8 +1,8 @@
 services:
-  jupyter:
-    image: oliverchenbz/jupyterlab_dev
+  dash:
+    image: oliverchenbz/dashcontainer
     ports:
-      - "8888:8888"
+      - "8050:8050"
     env_file:
       - .env
     volumes:

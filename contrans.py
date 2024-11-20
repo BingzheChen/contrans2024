@@ -10,6 +10,7 @@ import pymongo
 from bson.json_util import dumps, loads
 import sqlite3
 from sqlalchemy import create_engine
+import plotly.express as px
 
 dotenv.load_dotenv()
 
@@ -327,5 +328,32 @@ class contrans:
                 '''
                 df = pd.read_sql_query(myquery, con=engine)
                 return df.head(10), df.tail(10)
+            
+    def plot_ideology(self, bioguide_id):
+                server, engine = self.connect_to_postgres(self.postgrespassword)
+                myquery = '''
+                SELECT bioguideid, district, name, partyname, state, nominate_dim1
+                FROM members
+                '''
+                ideo = pd.read_sql_query(myquery, con=engine)
+                member_ideo = ideo.query(f"bioguideid == {bioguide_id}").reset_index(drop=True)
+                fig = px.histogram(ideo, x='nominate_dim1', 
+                                nbins=60, 
+                                title='Distribution of Nominate Dim1',
+                                color='partyname')
+                fig.update_xaxes(title_text="Left-Right Ideology")
+                fig.update_layout(title_x=0.5)
+                fig.update_layout(title_text="How Liberal or Conservative Is this Person?", title_x=0.5)
+                fig.update_layout(legend_title_text='Party')
+                fig.update_xaxes(tickvals=[-.5, 0, .5], ticktext=["Liberal", "Centrist", "Conservative"])
+                fig.add_vline(x=0, line_width=1, line_color="black")
+                fig.add_vline(x=member_ideo.iloc[0]['nominate_dim1'], line_width=3, line_dash="dash", line_color="red")
+                fig.update_layout(hovermode="closest")
+                fig.add_annotation(text=f"{member_ideo.iloc[0]['name']} ({member_ideo.iloc[0]['state']}-{member_ideo.iloc[0]['district']})", 
+                                xref="x", yref="paper", 
+                                x=member_ideo.iloc[0]['nominate_dim1'], y=1.05, 
+                                showarrow=False, 
+                                font=dict(size=12, color="red"))
+                return fig
             
     
