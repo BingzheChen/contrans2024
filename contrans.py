@@ -206,25 +206,24 @@ class contrans:
     
     ### Connect to Databases
             
-    def connect_to_postgres(self, pw, user='postgres',
-                            host='localhost', port=5432,
-                            create_contrans=False):
-        dbserver = psycopg.connect(
-            user=user,
-            password=pw,
-            host=host,
-            port=port
-        )
-        dbserver.autocommit = True
-        if create_contrans:
-            cursor = dbserver.cursor()
-            cursor.execute('DROP DATABASE IF EXISTS contrans')
-            cursor.execute('CREATE DATABASE contrans')
-        engine = create_engine(f'postgresql+psycopg://{user}:{pw}@{host}:{port}/contrans')
-        return dbserver, engine
+    def connect_to_postgres(self, pw, user='postgres', 
+                                host='localhost', port='5432',
+                                create_contrans = False):
+                dbserver = psycopg.connect(
+                    user=user, 
+                    password=pw, 
+                    host=host, 
+                    port=port)
+                dbserver.autocommit = True
+                if create_contrans:
+                        cursor = dbserver.cursor()
+                        cursor.execute("DROP DATABASE IF EXISTS contrans")
+                        cursor.execute("CREATE DATABASE contrans")
+                engine = create_engine(f'postgresql+psycopg://{user}:{pw}@{host}:{port}/contrans')
+                return dbserver, engine
     
-    def connect_to_mongo(self, from_scratch=False):
-        myclient = pymongo.MongoClient(f"mongodb://{self.MONGO_INITDB_ROOT_USERNAME}:{self.MONGO_INITDB_ROOT_PASSWORD}@localhost:27017/")
+    def connect_to_mongo(self, from_scratch=False, host='localhost'):
+        myclient = pymongo.MongoClient(f"mongodb://{self.MONGO_INITDB_ROOT_USERNAME}:{self.MONGO_INITDB_ROOT_PASSWORD}@{host}:27017/")
         mongo_contrans = myclient['contrans']
         collist = mongo_contrans.list_collection_names()
         if from_scratch and "bills" in collist:

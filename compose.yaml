@@ -1,6 +1,6 @@
 services:
   dash:
-    image: oliverchenbz/dashcontainer
+    image: oliverchenbz/dashboarddashcontainer
     ports:
       - "8050:8050"
     env_file:
